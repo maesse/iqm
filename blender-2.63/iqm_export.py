@@ -12,7 +12,7 @@ bl_info = {
     "tracker_url": "",
     "category": "Import-Export"}
 
-import os, struct, math
+import sys, os, struct, math
 import mathutils
 import bpy
 from bpy.props import *
