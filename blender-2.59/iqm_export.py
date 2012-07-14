@@ -3,7 +3,7 @@
 bl_info = {
     "name": "Export Inter-Quake Model (.iqm/.iqe)",
     "author": "Lee Salzman",
-    "version": (2012, 2, 21),
+    "version": (2012, 7, 14),
     "blender": (2, 5, 9),
     "api": 38674,
     "location": "File > Export > Inter-Quake Model",
@@ -13,7 +13,7 @@ bl_info = {
     "tracker_url": "",
     "category": "Import-Export"}
 
-import os, struct, math
+import sys, os, struct, math
 import mathutils
 import bpy
 from bpy.props import *
@@ -542,6 +542,11 @@ class IQMFile:
 
     def export(self, file, usebbox = True):
         self.filesize = IQM_HEADER.size
+
+        comment = getComment()
+        ofs_comment = self.addText(comment)
+        print('Comment len: %d, offset: %d' % (len(comment), ofs_comment))
+
         if self.textdata:
             while len(self.textdata) % 4:
                 self.textdata += b'\x00'
@@ -561,7 +566,7 @@ class IQMFile:
                 num_vertexarrays += 2
             hascolors = any(mesh.verts and mesh.verts[0].color for mesh in self.meshes)
             if hascolors:
-                num_vertexarrays += 1
+               num_vertexarrays += 1
             self.filesize += num_vertexarrays * IQM_VERTEXARRAY.size
             ofs_vdata = self.filesize
             self.filesize += self.numverts * struct.calcsize('<3f2f3f4f')
@@ -610,7 +615,7 @@ class IQMFile:
         else:
             ofs_bounds = 0
 
-        file.write(IQM_HEADER.pack('INTERQUAKEMODEL'.encode('ascii'), 2, self.filesize, 0, len(self.textdata), ofs_text, len(self.meshdata), ofs_meshes, num_vertexarrays, self.numverts, ofs_vertexarrays, self.numtris, ofs_triangles, ofs_neighbors, len(self.jointdata), ofs_joints, len(self.posedata), ofs_poses, len(self.animdata), ofs_anims, self.numframes, self.framesize, ofs_frames, ofs_bounds, 0, 0, 0, 0))
+        file.write(IQM_HEADER.pack('INTERQUAKEMODEL'.encode('ascii'), 2, self.filesize, 0, len(self.textdata), ofs_text, len(self.meshdata), ofs_meshes, num_vertexarrays, self.numverts, ofs_vertexarrays, self.numtris, ofs_triangles, ofs_neighbors, len(self.jointdata), ofs_joints, len(self.posedata), ofs_poses, len(self.animdata), ofs_anims, self.numframes, self.framesize, ofs_frames, ofs_bounds, len(comment), ofs_comment, 0, 0))
         file.write(self.textdata)
         for mesh in self.meshdata:
             file.write(IQM_MESH.pack(*mesh))
@@ -629,6 +634,14 @@ class IQMFile:
             for anim in self.anims:
                 file.write(anim.boundsData(self.joints, self.meshes))
 
+def getComment():
+    if('IQMScript' in sys.modules):
+        del(sys.modules["IQMScript"])
+    try:
+        import IQMScript
+        return IQMScript.iqmc
+    except ImportError:
+        return ""
 
 def findArmature(context):
     armature = None
@@ -1070,7 +1083,7 @@ class ExportIQM(bpy.types.Operator, ExportHelper):
     usecol = BoolProperty(name="Vertex colors", description="Export vertex colors", default=False)
     usescale = FloatProperty(name="Scale", description="Scale of exported model", default=1.0, min=0.0, step=50, precision=2)
     #usetrans = FloatVectorProperty(name="Translate", description="Translate position of exported model", step=50, precision=2, size=3)
-    matfmt = EnumProperty(name="Materials", description="Material name format", items=[("m+i-e", "material+image-ext", ""), ("m", "material", ""), ("i", "image", "")], default="m+i-e")
+    matfmt = EnumProperty(name="Materials", description="Material name format", items=[("m+i-e", "material+image-ext", ""), ("m", "material", ""), ("i", "image", "")], default="i")
     derigify = BoolProperty(name="De-rigify", description="Export only deformation bones from rigify", default=False)
 
     def execute(self, context):
