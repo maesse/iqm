@@ -1035,6 +1035,13 @@ def exportIQM(context, filename, usemesh = True, useskel = True, usebbox = True,
         meshes = collectMeshes(context, bones, scale, matfun, useskel, usecol, filetype)
     else:
         meshes = []
+
+    if animspecs == "*":
+        outlist = []
+        for item in bpy.data.actions:
+            outlist.append(item.name)
+        animspecs = ",".join(outlist)
+
     if useskel and animspecs:
         anims = collectAnims(context, armature, scale, bonelist, animspecs)
     else:
@@ -1071,10 +1078,10 @@ class ExportIQM(bpy.types.Operator, ExportHelper):
     bl_idname = "export.iqm"
     bl_label = 'Export IQM'
     filename_ext = ".iqm"
-    animspec = StringProperty(name="Animations", description="Animations to export", maxlen=1024, default="")
+    animspec = StringProperty(name="Animations", description="Animations to export", maxlen=1024, default="*")
     usemesh = BoolProperty(name="Meshes", description="Generate meshes", default=True)
     useskel = BoolProperty(name="Skeleton", description="Generate skeleton", default=True)
-    usebbox = BoolProperty(name="Bounding boxes", description="Generate bounding boxes", default=True)
+    usebbox = BoolProperty(name="Bounding boxes", description="Generate bounding boxes", default=False)
     usecol = BoolProperty(name="Vertex colors", description="Export vertex colors", default=False)
     usescale = FloatProperty(name="Scale", description="Scale of exported model", default=1.0, min=0.0, step=50, precision=2)
     #usetrans = FloatVectorProperty(name="Translate", description="Translate position of exported model", step=50, precision=2, size=3)
